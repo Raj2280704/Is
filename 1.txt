@@ -1,0 +1,58 @@
+Relevant CO: Explore the basic principles of the symmetric cryptography and techniques with 
+their strengths and weaknesses from perspective of cryptanalysis
+Objectives: (a) to understand working fundamental of Caeser Cipher
+ (b) to carry out Implementation of Caesar cipher encryption-decryption
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+void encrypt(char text[], int shift)
+{
+    for (int i = 0; i < strlen(text); i++)
+    {
+        if (isalpha(text[i]))
+        {
+            char base = islower(text[i]) ? 'a' : 'A';
+            text[i] = (text[i] - base + shift) % 26 + base;
+        }
+    }
+}
+void decrypt(char text[], int shift)
+{
+    for (int i = 0; i < strlen(text); i++)
+    {
+        if (isalpha(text[i]))
+        {
+            char base = islower(text[i]) ? 'a' : 'A';
+            text[i] = (text[i] - base - shift + 26) % 26 + base;
+        }
+    }
+}
+int main()
+{
+    char text[100];
+    int shift;
+    int choice;
+    printf("Enter a string: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0'; // Remove newline character
+    printf("Enter shift value: ");
+    scanf("%d", &shift);
+    printf("1. Encrypt\n2. Decrypt\nEnter your choice: ");
+    scanf("%d", &choice);
+    if (choice == 1)
+    {
+        encrypt(text, shift);
+        printf("Encrypted text: %s\n", text);
+    }
+    else if (choice == 2)
+    {
+        decrypt(text, shift);
+        printf("Decrypted text: %s\n", text);
+    }
+    else
+    {
+        printf("Invalid choice!\n");
+    }
+    return 0;
+}

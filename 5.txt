@@ -1,0 +1,98 @@
+Relevant CO: Explore the basic principles of the symmetric cryptography and techniques with 
+their strengths and weaknesses from perspective of cryptanalysis
+
+Objectives: (a) to understand working fundamental of Rail Fence Transposition Cipher
+ (b) to carry out Implementation of Rail Fence Transposition Cipher
+encryption-decryption.
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void railFenceEncrypt(char plaintext[], int key) {
+    int len = strlen(plaintext);
+    char rail[key][len];
+    for (int i = 0; i < key; i++)
+        for (int j = 0; j < len; j++)
+            rail[i][j] = '\n';
+
+    int row = 0, dir = 1;
+    for (int i = 0; i < len; i++) {
+        rail[row][i] = plaintext[i];
+        row += dir;
+        if (row == key - 1 || row == 0) {
+            dir = -dir;
+        }
+    }
+
+    printf("Encrypted text: ");
+    for (int i = 0; i < key; i++) {
+        for (int j = 0; j < len; j++) {
+            if (rail[i][j] != '\n') {
+                printf("%c", rail[i][j]);
+            }
+        }
+    }
+    printf("\n");
+}
+
+void railFenceDecrypt(char ciphertext[], int key) {
+    int len = strlen(ciphertext);
+    char rail[key][len];
+    for (int i = 0; i < key; i++)
+        for (int j = 0; j < len; j++)
+            rail[i][j] = '\n';
+
+    int row = 0, dir = 1;
+    for (int i = 0; i < len; i++) {
+        rail[row][i] = '*';
+        row += dir;
+        if (row == key - 1 || row == 0) {
+            dir = -dir;
+        }
+    }
+
+    int index = 0;
+    for (int i = 0; i < key; i++) {
+        for (int j = 0; j < len; j++) {
+            if (rail[i][j] == '*' && index < len) {
+                rail[i][j] = ciphertext[index++];
+            }
+        }
+    }
+
+    printf("Decrypted text: ");
+    row = 0, dir = 1;
+    for (int i = 0; i < len; i++) {
+        printf("%c", rail[row][i]);
+        row += dir;
+        if (row == key - 1 || row == 0) {
+            dir = -dir;
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    char plaintext[100], ciphertext[100];
+    int key;
+
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0';  // Remove trailing newline
+
+    printf("Enter the key (number of rails): ");
+    scanf("%d", &key);
+    getchar();  // Consume the newline left by scanf
+
+    railFenceEncrypt(plaintext, key);
+
+    printf("Enter the ciphertext to decrypt: ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0';  // Remove trailing newline
+
+    railFenceDecrypt(ciphertext, key);
+
+    return 0;
+}

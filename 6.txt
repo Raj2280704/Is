@@ -1,0 +1,163 @@
+Relevant CO: Implement and analyze various symmetric key cryptography algorithms 
+and their application in different context
+
+Objectives: (a) to understand working fundamental of DES Algorithm
+ (b) to carry out Implementation of DES encryption-decryption
+
+
+#include <stdio.h>
+#include <string.h>
+
+int P10[] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
+int P8[] = {6, 3, 7, 4, 8, 5, 10, 9};
+int IP[] = {2, 6, 3, 1, 4, 8, 5, 7};
+int IP_INV[] = {4, 1, 3, 5, 7, 2, 8, 6};
+int EP[] = {4, 1, 2, 3, 2, 3, 4, 1};
+int P4[] = {2, 4, 3, 1};
+int S0[4][4] = {
+    {1, 0, 3, 2},
+    {3, 2, 1, 0},
+    {0, 2, 1, 3},
+    {3, 1, 3, 2}};
+int S1[4][4] = {
+    {0, 1, 2, 3},
+    {2, 0, 1, 3},
+    {3, 0, 1, 0},
+    {2, 1, 0, 3}};
+
+// Function for permutation
+void permute(int *input, int *output, int *table, int n) {
+    for (int i = 0; i < n; i++) {
+        output[i] = input[table[i] - 1];
+    }
+}
+
+// Function for left shifting key
+void leftShift(int *key, int shifts) {
+    int temp = key[0];
+    for (int i = 0; i < shifts - 1; i++) {
+        key[i] = key[i + 1];
+    }
+    key[shifts - 1] = temp;
+}
+
+// Key generation function
+void generateKeys(int *key, int *K1, int *K2) {
+    int temp[10], left[5], right[5];
+    permute(key, temp, P10, 10);
+    for (int i = 0; i < 5; i++) {
+        left[i] = temp[i];
+        right[i] = temp[i + 5];
+    }
+    leftShift(left, 5);
+    leftShift(right, 5);
+    for (int i = 0; i < 5; i++) {
+        temp[i] = left[i];
+        temp[i + 5] = right[i];
+    }
+    permute(temp, K1, P8, 8);
+    leftShift(left, 5);
+    leftShift(right, 5);
+    for (int i = 0; i < 5; i++) {
+        temp[i] = left[i];
+        temp[i + 5] = right[i];
+    }
+    permute(temp, K2, P8, 8);
+}
+
+// XOR function
+void XOR(int *a, int *b, int n) {
+    for (int i = 0; i < n; i++) {
+        a[i] = a[i] ^ b[i];
+    }
+}
+
+// Lookup function for S-box
+int lookupSBox(int row, int col, int S[4][4]) {
+    return S[row][col];
+}
+
+// Function to apply S-boxes
+void applySBoxes(int *input, int *output) {
+    int row, col, S0_output, S1_output;
+    row = input[0] * 2 + input[3];
+    col = input[1] * 2 + input[2];
+    S0_output = lookupSBox(row, col, S0);
+    row = input[4] * 2 + input[7];
+    col = input[5] * 2 + input[6];
+    S1_output = lookupSBox(row, col, S1);
+    int combined[] = {S0_output / 2, S0_output % 2, S1_output / 2, S1_output % 2};
+    permute(combined, output, P4, 4);
+}
+
+// Function fK to handle the function during encryption
+void fK(int *input, int *subkey) {
+    int left[4], right[4], expandedRight[8], sboxInput[8], sboxOutput[4];
+    for (int i = 0; i < 4; i++) {
+        left[i] = input[i];
+        right[i] = input[i + 4];
+    }
+    permute(right, expandedRight, EP, 8);
+    XOR(expandedRight, subkey, 8);
+    applySBoxes(expandedRight, sboxOutput);
+    XOR(left, sboxOutput, 4);
+    for (int i = 0; i < 4; i++) {
+        input[i] = left[i];
+    }
+}
+
+// Encryption function
+void encrypt(int *plaintext, int *key1, int *key2) {
+    int temp[8];
+    permute(plaintext, temp, IP, 8); // Initial permutation (IP)
+    fK(temp, key1); // First round with key1
+    int tempSwap[4];
+    
+    // Swap the left and right halves
+    for (int i = 0; i < 4; i++) {
+        tempSwap[i] = temp[i];
+        temp[i] = temp[i + 4];
+        temp[i + 4] = tempSwap[i];
+    }
+    
+    fK(temp, key2); // Second round with key2
+    permute(temp, plaintext, IP_INV, 8); // Final inverse permutation (IP_INV)
+}
+
+// Decryption function (same as encryption but with reversed keys)
+void decrypt(int *ciphertext, int *key1, int *key2) {
+    encrypt(ciphertext, key2, key1); // Reverse the keys for decryption
+}
+
+// Main function
+int main() {
+    int key[] = {1, 0, 1, 0, 0, 0, 0, 0, 1, 0}; // 10-bit key
+    int plaintext[] = {1, 0, 1, 0, 0, 1, 1, 1}; // 8-bit plaintext
+    int key1[8], key2[8];
+    
+    generateKeys(key, key1, key2);
+    
+    printf("Plaintext: ");
+    for (int i = 0; i < 8; i++) {
+        printf("%d", plaintext[i]);
+    }
+    printf("\n");
+    
+    encrypt(plaintext, key1, key2);
+    
+    printf("Ciphertext: ");
+    for (int i = 0; i < 8; i++) {
+        printf("%d", plaintext[i]);
+    }
+    printf("\n");
+    
+    decrypt(plaintext, key1, key2);
+    
+    printf("Decrypted text: ");
+    for (int i = 0; i < 8; i++) {
+        printf("%d", plaintext[i]);
+    }
+    printf("\n");
+    
+    return 0;
+}

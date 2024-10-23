@@ -1,0 +1,112 @@
+Relevant CO: Explore and use the techniques and standards of digital signature, key 
+management and authentication
+
+Objectives: (a) to understand working fundamental of digital signature standard
+ (b) to carry out Implementation of digital signature standard.
+
+
+#include <stdio.h>
+#include <math.h>
+
+// Extended Euclidean Algorithm for modular inverse
+long int ext_euclidean(long int m, long int b) {
+    int a1 = 1, a2 = 0, a3 = m, b1 = 0, b2 = 1, b3 = b, q, t1, t2, t3;
+    
+    while (1) {
+        if (b3 == 0) {
+            return 0;  // No modular inverse
+        }
+        if (b3 == 1) {
+            if (b2 < 0) {
+                b2 += m;  // Make sure result is positive
+            }
+            return b2;  // Return the modular inverse
+        }
+
+        q = a3 / b3;
+        t1 = a1 - (q * b1);
+        t2 = a2 - (q * b2);
+        t3 = a3 - (q * b3);
+
+        a1 = b1;
+        a2 = b2;
+        a3 = b3;
+
+        b1 = t1;
+        b2 = t2;
+        b3 = t3;
+    }
+}
+
+// Function to calculate a^j % c
+long int power(long int a, long int j, long int c) {
+    long int result = 1;
+    for (int i = 1; i <= j; i++) {
+        result = (result * a) % c;
+    }
+    return result % c;
+}
+
+int main() {
+    long int p, q, g, x, hm, k, y, r, s, s1, w, u1, u2, v, v1, v2, v3;
+
+    // Input values
+    printf("Enter the value of p: ");
+    scanf("%ld", &p);
+    
+    printf("Enter the value of q: ");
+    scanf("%ld", &q);
+    
+    printf("Enter the value of g: ");
+    scanf("%ld", &g);
+    
+    printf("Enter the value of x: ");
+    scanf("%ld", &x);
+    
+    printf("Enter the value of hm (hashed message): ");
+    scanf("%ld", &hm);
+    
+    printf("Enter the value of k (random value): ");
+    scanf("%ld", &k);
+
+    // Calculate public key y = g^x % p
+    y = power(g, x, p);
+    printf("\nValue of y: %ld", y);
+
+    // Signature generation
+    r = power(g, k, p) % q;
+    printf("\nValue of r: %ld", r);
+
+    s = ext_euclidean(q, k);
+    s1 = (hm + (x * r)) % q;
+    s = (s * s1) % q;
+    printf("\nValue of s: %ld", s);
+
+    // Signature (r, s)
+    printf("\nSignature (r, s): %ld, %ld", r, s);
+
+    // Verification process
+    w = ext_euclidean(q, s);
+    printf("\nValue of w: %ld", w);
+
+    u1 = (hm * w) % q;
+    printf("\nValue of u1: %ld", u1);
+
+    u2 = (r * w) % q;
+    printf("\nValue of u2: %ld", u2);
+
+    v = power(g, u1, p);
+    v1 = power(y, u2, p);
+    v2 = (v * v1) % p;
+    v3 = v2 % q;
+    printf("\nValue of v: %ld\n", v3);
+
+    // Check if the signature is valid
+    if (v3 == r) {
+        printf("Signature is valid.\n");
+    } else {
+        printf("Signature is invalid.\n");
+    }
+
+    return 0;
+}

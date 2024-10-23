@@ -1,0 +1,145 @@
+Relevant CO: Explore the concept of hashing and implement various hashing algorithms 
+for message integrity
+
+Objectives: (a) to understand working fundamental of SHA-1
+ (b) to carry out Implementation of SHA-1.
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define ROTLEFT(a, b) (((a) << (b)) | ((a) >> (32 - (b))))
+#define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
+#define PARITY(x, y, z) ((x) ^ (y) ^ (z))
+#define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+
+// Initial hash values
+uint32_t H0 = 0x67452301;
+uint32_t H1 = 0xEFCDAB89;
+uint32_t H2 = 0x98BADCFE;
+uint32_t H3 = 0x10325476;
+uint32_t H4 = 0xC3D2E1F0;
+
+// Constants used in SHA-1
+const uint32_t K[] = {
+    0x5A827999, // 0 <= t <= 19
+    0x6ED9EBA1, // 20 <= t <= 39
+    0x8F1BBCDC, // 40 <= t <= 59
+    0xCA62C1D6  // 60 <= t <= 79
+};
+
+// Padding function for SHA-1
+void sha1_pad(uint8_t *message, size_t length, uint8_t **padded_message, size_t *padded_length) {
+    size_t padding = 64 - ((length + 8) % 64);
+    *padded_length = length + padding + 8;
+    *padded_message = (uint8_t *)malloc(*padded_length);
+
+    // Copy the message
+    memcpy(*padded_message, message, length);
+    (*padded_message)[length] = 0x80; // Append '1' bit
+
+    // Pad with zeroes
+    memset(*padded_message + length + 1, 0, padding - 1);
+
+    // Append original length in bits
+    uint64_t bit_length = length * 8;
+    for (int i = 0; i < 8; i++) {
+        (*padded_message)[*padded_length - 1 - i] = (bit_length >> (i * 8)) & 0xFF;
+    }
+}
+
+// Processes each 512-bit chunk of the message
+void sha1_process_chunk(uint8_t chunk[64]) {
+    uint32_t W[80];
+    uint32_t a, b, c, d, e, temp;
+
+    // Initialize the message schedule array
+    for (int i = 0; i < 16; i++) {
+        W[i] = (chunk[i * 4] << 24) | (chunk[i * 4 + 1] << 16) | (chunk[i * 4 + 2] << 8) | (chunk[i * 4 + 3]);
+    }
+    for (int i = 16; i < 80; i++) {
+        W[i] = ROTLEFT(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], 1);
+    }
+
+    // Initialize working variables
+    a = H0;
+    b = H1;
+    c = H2;
+    d = H3;
+    e = H4;
+
+    // Main loop
+    for (int i = 0; i < 80; i++) {
+        uint32_t f, k;
+        if (i < 20) {
+            f = CH(b, c, d);
+            k = K[0];
+        } else if (i < 40) {
+            f = PARITY(b, c, d);
+            k = K[1];
+        } else if (i < 60) {
+            f = MAJ(b, c, d);
+            k = K[2];
+        } else {
+            f = PARITY(b, c, d);
+            k = K[3];
+        }
+
+        temp = ROTLEFT(a, 5) + f + e + k + W[i];
+        e = d;
+        d = c;
+        c = ROTLEFT(b, 30);
+        b = a;
+        a = temp;
+    }
+
+    // Add this chunk's hash to the result so far
+    H0 += a;
+    H1 += b;
+    H2 += c;
+    H3 += d;
+    H4 += e;
+}
+
+// Main function to compute the SHA-1 hash
+void sha1_hash(uint8_t *message, size_t length, uint8_t hash[20]) {
+    uint8_t *padded_message;
+    size_t padded_length;
+
+    // Pad the message
+    sha1_pad(message, length, &padded_message, &padded_length);
+
+    // Process each 512-bit chunk
+    for (size_t i = 0; i < padded_length; i += 64) {
+        sha1_process_chunk(padded_message + i);
+    }
+
+    // Produce the final hash value (big-endian)
+    hash[0] = H0 >> 24; hash[1] = H0 >> 16; hash[2] = H0 >> 8; hash[3] = H0;
+    hash[4] = H1 >> 24; hash[5] = H1 >> 16; hash[6] = H1 >> 8; hash[7] = H1;
+    hash[8] = H2 >> 24; hash[9] = H2 >> 16; hash[10] = H2 >> 8; hash[11] = H2;
+    hash[12] = H3 >> 24; hash[13] = H3 >> 16; hash[14] = H3 >> 8; hash[15] = H3;
+    hash[16] = H4 >> 24; hash[17] = H4 >> 16; hash[18] = H4 >> 8; hash[19] = H4;
+
+    // Free the padded message memory
+    free(padded_message);
+}
+
+int main() {
+    const char *message = "hello";
+    uint8_t hash[20];
+
+    // Compute SHA-1 hash
+    sha1_hash((uint8_t *)message, strlen(message), hash);
+
+    // Print the resulting hash
+    printf("SHA-1 hash of '%s': ", message);
+    for (int i = 0; i < 20; i++) {
+        printf("%02x", hash[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

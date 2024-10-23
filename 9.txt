@@ -1,0 +1,48 @@
+Relevant CO: Compare public key cryptography with private key cryptography and 
+implement various asymmetric key cryptography algorithms
+
+Objectives: (a) to understand working fundamental of Diffie–Hellman Key Exchange
+ (b) to carry out Implementation of Diffie–Hellman Key Exchange algorithm.
+
+
+#include <stdio.h>
+
+// Function to perform modular exponentiation
+long long int power(long long int a, long long int b, long long int P) {
+    long long int result = 1;
+    a = a % P;
+    while (b > 0) {
+        if (b % 2 == 1) {
+            result = (result * a) % P;
+        }
+        b = b >> 1;
+        a = (a * a) % P;
+    }
+    return result;
+}
+
+int main() {
+    long long int P, G, x, a, y, b, ka, kb;
+
+    P = 23; // A prime number P is taken
+    printf("The value of P: %lld\n", P);
+
+    G = 9; // A primitive root for P, G is taken
+    printf("The value of G: %lld\n\n", G);
+
+    a = 4; // a is the chosen private key
+    printf("The private key a for Alice: %lld\n", a);
+    x = power(G, a, P); // gets the generated key
+
+    b = 3; // b is the chosen private key
+    printf("The private key b for Bob: %lld\n\n", b);
+    y = power(G, b, P); // gets the generated key
+
+    ka = power(y, a, P); // Secret key for Alice
+    kb = power(x, b, P); // Secret key for Bob
+
+    printf("Secret key for the Alice is: %lld\n", ka);
+    printf("Secret Key for the Bob is: %lld\n", kb);
+
+    return 0;
+}

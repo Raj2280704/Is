@@ -1,0 +1,110 @@
+Relevant CO: Explore the basic principles of the symmetric cryptography and techniques with 
+their strengths and weaknesses from perspective of cryptanalysis
+
+Objectives: (a) to understand working fundamental of Playfair cipher
+ (b) to carry out Implementation of Playfair cipher encryption-decryption.
+
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+void generateKeyTable(char key[], char keyTable[SIZE][SIZE]) {
+    int used[26] = {0};
+    used['J' - 'A'] = 1;
+    int i = 0, j = 0;
+    for (int k = 0; k < strlen(key); k++) {
+        if (!used[toupper(key[k]) - 'A']) {
+            keyTable[i][j] = toupper(key[k]);
+            used[toupper(key[k]) - 'A'] = 1;
+            j++;
+            if (j == SIZE) {
+                j = 0;
+                i++;
+            }
+        }
+    }
+    for (char ch = 'A'; ch <= 'Z'; ch++) {
+        if (!used[ch - 'A']) {
+            keyTable[i][j] = ch;
+            j++;
+            if (j == SIZE) {
+                j = 0;
+                i++;
+            }
+        }
+    }
+}
+
+void search(char keyTable[SIZE][SIZE], char ch, int *row, int *col) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyTable[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+void encryptPair(char keyTable[SIZE][SIZE], char *a, char *b) {
+    int row1, col1, row2, col2;
+    search(keyTable, *a, &row1, &col1);
+    search(keyTable, *b, &row2, &col2);
+    if (row1 == row2) {
+        *a = keyTable[row1][(col1 + 1) % SIZE];
+        *b = keyTable[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) {
+        *a = keyTable[(row1 + 1) % SIZE][col1];
+        *b = keyTable[(row2 + 1) % SIZE][col2];
+    } else {
+        *a = keyTable[row1][col2];
+        *b = keyTable[row2][col1];
+    }
+}
+
+void preprocessText(char text[]) {
+    int len = strlen(text);
+    for (int i = 0; i < len; i++) {
+        text[i] = toupper(text[i]);
+    }
+    for (int i = 0; i < len; i += 2) {
+        if (text[i] == text[i + 1]) {
+            for (int j = len; j > i + 1; j--) {
+                text[j] = text[j - 1];
+            }
+            text[i + 1] = 'X';
+            len++;
+        }
+    }
+    if (len % 2 != 0) {
+        text[len] = 'X';
+        text[len + 1] = '\0';
+    }
+}
+
+void playfairEncrypt(char text[], char key[]) {
+    char keyTable[SIZE][SIZE];
+    generateKeyTable(key, keyTable);
+    preprocessText(text);
+    for (int i = 0; i < strlen(text); i += 2) {
+        encryptPair(keyTable, &text[i], &text[i + 1]);
+    }
+}
+
+int main() {
+    char text[100], key[100];
+    printf("Enter the plaintext: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0';  // Remove trailing newline
+    printf("Enter the key: ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';  // Remove trailing newline
+    playfairEncrypt(text, key);
+    printf("Encrypted text: %s\n", text);
+    return 0;
+}

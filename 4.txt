@@ -1,0 +1,67 @@
+Relevant CO: Explore the basic principles of the symmetric cryptography and techniques with 
+their strengths and weaknesses from perspective of cryptanalysis
+
+Objectives: (a) to understand working fundamental of Vigenere Cipher
+ (b) to carry out Implementation of Vigenere cipher encryption-decryption
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void vigenereEncrypt(char plaintext[], char key[]) {
+    int textLen = strlen(plaintext);
+    int keyLen = strlen(key);
+    char ciphertext[100];
+
+    for (int i = 0, j = 0; i < textLen; i++) {
+        char c = toupper(plaintext[i]);
+        if (isalpha(c)) {
+            ciphertext[i] = ((c - 'A') + (toupper(key[j % keyLen]) - 'A')) % 26 + 'A';
+            j++;
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[textLen] = '\0';
+    printf("Encrypted text: %s\n", ciphertext);
+}
+
+void vigenereDecrypt(char ciphertext[], char key[]) {
+    int textLen = strlen(ciphertext);
+    int keyLen = strlen(key);
+    char decryptedText[100];
+
+    for (int i = 0, j = 0; i < textLen; i++) {
+        char c = toupper(ciphertext[i]);
+        if (isalpha(c)) {
+            decryptedText[i] = ((c - 'A') - (toupper(key[j % keyLen]) - 'A') + 26) % 26 + 'A';
+            j++;
+        } else {
+            decryptedText[i] = ciphertext[i]; // Keep non-alphabet characters unchanged
+        }
+    }
+    decryptedText[textLen] = '\0'; // Null-terminate the string
+    printf("Decrypted text: %s\n", decryptedText);
+}
+
+int main() {
+    char plaintext[100], key[100], ciphertext[100];
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0';  // Remove trailing newline
+
+    printf("Enter the key: ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';  // Remove trailing newline
+
+    vigenereEncrypt(plaintext, key);
+
+    printf("\nEnter the ciphertext to decrypt: ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0';  // Remove trailing newline
+
+    vigenereDecrypt(ciphertext, key);
+
+    return 0;
+}

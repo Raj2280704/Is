@@ -1,0 +1,73 @@
+Relevant CO: Explore the basic principles of the symmetric cryptography and techniques with 
+their strengths and weaknesses from perspective of cryptanalysis
+
+Objectives: (a) to understand working fundamental of Hill Cipher
+ (b) to carry out Implementation of Hill cipher encryption-decryption.
+
+
+
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MATRIX_SIZE 2
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1; // No modular inverse exists
+}
+
+void matrixMultiply(int key[MATRIX_SIZE][MATRIX_SIZE], int message[MATRIX_SIZE], int result[MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        result[i] = 0;
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            result[i] += key[i][j] * message[j];
+        }
+        result[i] %= 26;
+    }
+}
+
+void hillEncrypt(char plaintext[], int key[MATRIX_SIZE][MATRIX_SIZE]) {
+    int len = strlen(plaintext);
+    if (len % MATRIX_SIZE != 0) {
+        printf("Error: Plaintext length should be divisible by %d\n", MATRIX_SIZE);
+        return;
+    }
+
+    for (int i = 0; i < len; i += MATRIX_SIZE) {
+        int message[MATRIX_SIZE];
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            message[j] = toupper(plaintext[i + j]) - 'A';
+        }
+        int result[MATRIX_SIZE];
+        matrixMultiply(key, message, result);
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            plaintext[i + j] = (result[j] + 'A');
+        }
+    }
+}
+
+int main() {
+    char plaintext[100];
+    int key[MATRIX_SIZE][MATRIX_SIZE] = { {6, 24}, {1, 16} };
+
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0';  // Remove trailing newline
+
+    int len = strlen(plaintext);
+    if (len % MATRIX_SIZE != 0) {
+        strcat(plaintext, "X");
+    }
+
+    hillEncrypt(plaintext, key);
+    printf("Encrypted text: %s\n", plaintext);
+
+    return 0;
+}
